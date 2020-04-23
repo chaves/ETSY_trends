@@ -35,7 +35,7 @@ except:
 
 try:
   c.execute('''CREATE TABLE `products` (
-    `id` int(11) PRIMARY KEY,
+    `id` integer PRIMARY KEY,
     `check_date` timestamp,
     `product_id` integer,
     `last_modified_tsz` integer,
