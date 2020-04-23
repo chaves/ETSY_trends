@@ -75,6 +75,7 @@ try:
 
         page = 1
         count_page = 0
+        no_products = False
         print(c['shop_name'])
         
         while page:
@@ -88,6 +89,7 @@ try:
             if code == 200:
                 count_page += 1
                 if len(data['results']) == 0:
+                    no_products = True
                     print('No products')
                     page = False
                 else:
@@ -99,6 +101,8 @@ try:
                 page = data['pagination']['next_page']
             
         try:
+            if (no_products):
+                count_page = 'no products'
             sheet.update_cell(index + 2, 7, date_now)
             sheet.update_cell(index + 2, 8, count_page)
         except:
