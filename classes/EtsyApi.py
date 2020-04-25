@@ -13,8 +13,8 @@ config_parser.read('./private/etsy.conf')
 
 class EtsyApi(object):
 
-    def __init__(self):
-        self.api_key = config_parser.get('API', 'api_key')
+    def __init__(self, api_key_version):
+        self.api_key = config_parser.get('API', api_key_version)
         self.api_en_point = config_parser.get('API', 'end_point')
         self.get_seller_taxonomy_method = config_parser.get('API_METHODS', 'getSellerTaxonomy')
         self.request_code = 0

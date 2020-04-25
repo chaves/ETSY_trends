@@ -2,57 +2,32 @@
 # coding: utf-8
 
 from classes.EtsyApi import EtsyApi
-import pandas as pd
-import configparser
+from commons import *
+import os
 import time
-import gspread
-import datetime
-from oauth2client.service_account import ServiceAccountCredentials
-import smtplib, ssl
-import sqlite3
 
-TODAY = datetime.datetime.now().strftime('%Y-%m-%d')
-PRIVATE_FOLDER = './private/'
+TABLE_NAME = 'users'
+# So the script can run un several servers
+SERVER = 'SERVER_KIM'
+G_SHEET_NAME = config_parser.get(SERVER, 'sheet_name')
+G_SHEET_LINK = config_parser.get(SERVER, 'sheet_link')
+DATABASE_NAME = config_parser.get(SERVER, 'database_name')
+# With several API keys
+API_KEY_VERSION = 'api_key_google_mail'
 
-config_parser = configparser.ConfigParser()
-config_parser.read(PRIVATE_FOLDER + 'etsy.conf')
+DATABASE = OUTPUTS_FOLDER + DATABASE_NAME
 
-G_SHEET_CREDENTIALS_FILE = PRIVATE_FOLDER + config_parser.get('G_SHEET', 'credentials_file')
-G_SHEET_NAME = config_parser.get('G_SHEET', 'sheet_name')
-G_SHEET_LINK = config_parser.get('G_SHEET', 'sheet_link')
+# Get the Google Sheet control object
+sheet = get_sheet_object(G_SHEET_NAME)
 
-OUTPUTS_FOLDER = './outputs/'
-SQLITE_DATABASE = OUTPUTS_FOLDER + 'etsy.db'
-
-SMTP_SERVER = config_parser.get('EMAIL', 'smtp_server')
-SENDER_EMAIL = config_parser.get('EMAIL', 'sender_email')
-RECEIVER_EMAIL = config_parser.get('EMAIL', 'receiver_email')
-PASSWORD = config_parser.get('EMAIL', 'password')
-
-# Get Google sheet object
-def get_sheet_object():
-    scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-    credentials = ServiceAccountCredentials.from_json_keyfile_name(G_SHEET_CREDENTIALS_FILE, scope)
-    gspread_client = gspread.authorize(credentials)
-    return gspread_client.open(G_SHEET_NAME).sheet1
-
-
-sheet = get_sheet_object()
-
-def send_message(subject, text):
-    PORT = 587  # For starttls
-    message = 'Subject: {}\n\n{}'.format(subject, text)
-    context = ssl.create_default_context()
-    with smtplib.SMTP(SMTP_SERVER, PORT) as server:
-        server.starttls(context=context)
-        server.login(SENDER_EMAIL, PASSWORD)
-        server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, message)
-
+if not os.path.isfile(DATABASE):
+    create_database(DATABASE)
 
 # ### Specific for users
 
-def make_insert_user_query(data_tuple, cursor):
-    query = """INSERT INTO users (user_id, check_date, transaction_buy_count, transaction_sold_count) 
+def make_insert_user_query(d):
+    data_tuple = (d['user_id'], get_date_time_now(), d['transaction_buy_count'], d['transaction_sold_count'])
+    query = f"""INSERT INTO {TABLE_NAME} (user_id, check_date, transaction_buy_count, transaction_sold_count) 
     VALUES (?, ?, ?, ?)"""
     cursor.execute(query, data_tuple)
     return cursor.rowcount
@@ -63,49 +38,42 @@ failures = 0
 try:
     # Get users to update
     control_data = sheet.get_all_records()
-    # control_data = control_data[:3]
+    if CONFIG_STATUS == 'test':  # limit the number while testing
+        control_data = control_data[:TEST_NUMBER_TO_CHECK]
     
     # Connect to the database
-    connection = sqlite3.connect(SQLITE_DATABASE)
+    connection = sqlite3.connect(DATABASE)
     cursor = connection.cursor()
     
-    etsy = EtsyApi()
+    etsy = EtsyApi(API_KEY_VERSION)
     
     for index, c in enumerate(control_data):
         
-        time.sleep(2)
+        time.sleep(SLEEP_TIME)
         
         data = etsy.user_profile(c['user_id'])
         code = etsy.get_request_code()
         
         if code == 200:
-            date_now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') 
-            data_tuple = (data['user_id'], date_now, data['transaction_buy_count'], data['transaction_sold_count'])
-            make_insert_user_query(data_tuple, cursor)
+            make_insert_user_query(data)
         else:
             failures += 1
             
         try:
-            sheet.update_cell(index + 2, 2, date_now)
+            sheet.update_cell(index + 2, 2, get_date_time_now())
             sheet.update_cell(index + 2, 3, code)
-        except:
-            print("Failled to update Google sheet")
+        except Exception as ex:
+            print("Failed to update Google sheet", ex)
 
     connection.commit()
     cursor.close()
     
 except sqlite3.Error as error:
     print("Failed to insert data into sqlite table", error)
-        
-    subject = "Failled to update the users database."
-    text = f"Failled to update the users database.\n{G_SHEET_LINK}"
-    send_message(subject, text)
+    send_failed_message(TABLE_NAME, G_SHEET_LINK)
 
 finally:
     if (connection):    
         connection.close()
         print("The SQLite connection is closed")
-        
-        subject = "Users database updated."
-        text = f"Users database updated with {failures} failures.\n{G_SHEET_LINK}"
-        send_message(subject, text)
+        send_success_message(TABLE_NAME, G_SHEET_LINK, failures)
