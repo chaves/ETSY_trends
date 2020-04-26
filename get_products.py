@@ -27,7 +27,7 @@ if not os.path.isfile(DATABASE):
 def insert_products(shop_id, results):
     for r in results:
         data_tuple = (shop_id, get_date_time_now(), r['listing_id'],
-                    r['last_modified_tsz'], r['price'], r['views'], r['num_favorers'])
+                r['last_modified_tsz'], r['price'], r['views'], r['num_favorers'])
         query = f"""INSERT INTO {TABLE_NAME} (shop_id, check_date, product_id, 
                     last_modified_tsz, price, views, num_favorers) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)"""
@@ -53,7 +53,7 @@ try:
 
         page = 1
         count_page = 0
-        no_products = False
+        code = 0
         shop = c['shop_name']
         print(shop)
 
@@ -62,35 +62,42 @@ try:
             time.sleep(SLEEP_TIME)
             print('Page : ' + str(page))
 
-            data = etsy.get_shop_listings(shop, page=page)
-            code = etsy.get_request_code()
+            try:
+                data = etsy.get_shop_listings(shop, page=page)
+                code = etsy.get_request_code()
+
+            except Exception as ex:
+                time.sleep(300)  # Wait 5 minutes
+                data = etsy.get_shop_listings(shop, page=page)
+                code = etsy.get_request_code()
 
             if code == 200:
                 count_page += 1
                 if len(data['results']) == 0:
-                    no_products = True
+                    count_page = 'no products'
                     print('No products')
                     page = False
                 else:
                     insert_products(shop, data['results'])
                 page = data['pagination']['next_page']
+            else:
+                page = False
+
         try:
-            if (no_products):
-                count_page = 'no products'
             sheet.update_cell(index + 2, 7, get_date_time_now())
-            sheet.update_cell(index + 2, 8, count_page)
+            sheet.update_cell(index + 2, 8, code)
+            sheet.update_cell(index + 2, 9, count_page)
         except Exception as ex:
             print("Failed to update Google sheet", ex)
 
         connection.commit()
-        cursor.close()
 
 except sqlite3.Error as error:
     print("Failed to insert data into sqlite table", error)
     send_failed_message(TABLE_NAME, G_SHEET_LINK)
 
 finally:
-    if (connection):
-        connection.close()
-        print("The SQLite connection is closed")
-        send_success_message(TABLE_NAME, G_SHEET_LINK, failures)
+    cursor.close()
+    connection.close()
+    print("The SQLite connection is closed")
+    send_success_message(TABLE_NAME, G_SHEET_LINK, failures)

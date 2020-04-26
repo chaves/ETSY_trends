@@ -50,9 +50,15 @@ try:
     for index, c in enumerate(control_data):
         
         time.sleep(SLEEP_TIME)
-        
-        data = etsy.user_profile(c['user_id'])
-        code = etsy.get_request_code()
+
+        try:
+            data = etsy.user_profile(c['user_id'])
+            code = etsy.get_request_code()
+
+        except Exception as ex:
+            time.sleep(300)  # Wait 5 minutes
+            data = etsy.user_profile(c['user_id'])
+            code = etsy.get_request_code()
         
         if code == 200:
             make_insert_user_query(data)
@@ -66,14 +72,14 @@ try:
             print("Failed to update Google sheet", ex)
 
     connection.commit()
-    cursor.close()
     
 except sqlite3.Error as error:
     print("Failed to insert data into sqlite table", error)
     send_failed_message(TABLE_NAME, G_SHEET_LINK)
 
 finally:
-    if (connection):    
+    if (connection):
+        cursor.close()
         connection.close()
         print("The SQLite connection is closed")
         send_success_message(TABLE_NAME, G_SHEET_LINK, failures)
