@@ -74,6 +74,8 @@ try:
             print("Failed to update Google sheet")
 
     connection.commit()
+
+    send_success_message(TABLE_NAME, G_SHEET_LINK, failures)
     
 except sqlite3.Error as error:
     print("Failed to insert data into sqlite table", error)
@@ -84,4 +86,3 @@ finally:
         cursor.close()
         connection.close()
         print("The SQLite connection is closed")
-        send_success_message(TABLE_NAME, G_SHEET_LINK, failures)
