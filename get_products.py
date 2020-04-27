@@ -29,8 +29,8 @@ def insert_products(shop_id, results):
         data_tuple = (shop_id, get_date_time_now(), r['listing_id'], r['last_modified_tsz'],
                       r['price'], r['currency_code'], r['views'], r['num_favorers'])
         query = f"""INSERT INTO {TABLE_NAME} (shop_id, check_date, product_id, 
-                    last_modified_tsz, price, views, num_favorers) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
+                    last_modified_tsz, price, currency_code, views, num_favorers) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)"""
         cursor.execute(query, data_tuple)
 
 
