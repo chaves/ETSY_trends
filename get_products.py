@@ -90,9 +90,8 @@ try:
         except Exception as ex:
             print("Failed to update Google sheet", ex)
 
-        connection.commit()
-
-        send_success_message(TABLE_NAME, G_SHEET_LINK, failures)
+    connection.commit()
+    send_success_message(TABLE_NAME, G_SHEET_LINK, failures)
 
 except sqlite3.Error as error:
     print("Failed to insert data into sqlite table", error)
