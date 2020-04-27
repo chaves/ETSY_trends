@@ -35,15 +35,15 @@ def make_insert_user_query(d):
 g_sheet_status = []
 failures = 0
 
+# Connect to the database
+connection = sqlite3.connect(DATABASE)
+cursor = connection.cursor()
+
 try:
     # Get users to update
     control_data = sheet.get_all_records()
     if CONFIG_STATUS == 'test':  # limit the number while testing
         control_data = control_data[:TEST_NUMBER_TO_CHECK]
-    
-    # Connect to the database
-    connection = sqlite3.connect(DATABASE)
-    cursor = connection.cursor()
     
     etsy = EtsyApi(API_KEY_VERSION)
     
