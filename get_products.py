@@ -30,7 +30,7 @@ def insert_products(shop_id, results):
                       r['price'], r['currency_code'], r['views'], r['num_favorers'])
         query = f"""INSERT INTO {TABLE_NAME} (shop_id, check_date, product_id, 
                     last_modified_tsz, price, views, num_favorers) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)"""
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
         cursor.execute(query, data_tuple)
 
 
