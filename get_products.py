@@ -26,8 +26,8 @@ if not os.path.isfile(DATABASE):
 
 def insert_products(shop_id, results):
     for r in results:
-        data_tuple = (shop_id, get_date_time_now(), r['listing_id'],
-                r['last_modified_tsz'], r['price'], r['views'], r['num_favorers'])
+        data_tuple = (shop_id, get_date_time_now(), r['listing_id'], r['last_modified_tsz'],
+                      r['price'], r['currency_code'], r['views'], r['num_favorers'])
         query = f"""INSERT INTO {TABLE_NAME} (shop_id, check_date, product_id, 
                     last_modified_tsz, price, views, num_favorers) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)"""

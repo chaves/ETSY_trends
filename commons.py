@@ -102,6 +102,7 @@ def create_database(database):
         `product_id` integer,
         `last_modified_tsz` integer,
         `price` real,
+        `currency_code` text '',
         `views` integer,
         `num_favorers` integer
       )''')
