@@ -26,10 +26,11 @@ if not os.path.isfile(DATABASE):
 
 def insert_products(shop_id, results):
     for r in results:
+        taxonomy_path_join = '/'.join(r['taxonomy_path'])
         data_tuple = (shop_id, get_date_time_now(), r['listing_id'], r['last_modified_tsz'],
-                      r['price'], r['currency_code'], r['views'], r['num_favorers'])
+                      r['price'], r['currency_code'], r['views'], r['num_favorers'], taxonomy_path_join)
         query = f"""INSERT INTO {TABLE_NAME} (shop_id, check_date, product_id, 
-                    last_modified_tsz, price, currency_code, views, num_favorers) 
+                    last_modified_tsz, price, currency_code, views, num_favorers, taxonomy_path) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
         cursor.execute(query, data_tuple)
 
