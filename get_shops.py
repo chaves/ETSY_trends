@@ -25,7 +25,7 @@ if not os.path.isfile(DATABASE):
 
 
 def make_insert_shop_query(d):
-    data_tuple = (d['shop_name'], d['user_id'], get_date_time_now(), d['is_vacation'], d['last_updated_tsz'],
+    data_tuple = (d['shop_id'], d['user_id'], get_date_time_now(), d['is_vacation'], d['last_updated_tsz'],
                   d['listing_active_count'], d['policy_updated_tsz'], d['num_favorers'])
     query = f"""INSERT INTO {TABLE_NAME} (shop_id, user_id, check_date, is_vacation, last_updated_tsz, 
         listing_active_count, policy_updated_tsz, num_favorers) 
@@ -54,12 +54,12 @@ try:
         time.sleep(SLEEP_TIME)
 
         try:
-            data = etsy.get_shop(c['shop_name'])
+            data = etsy.get_shop(c['shop_id'])
             code = etsy.get_request_code()
 
         except Exception as ex:
             time.sleep(300)  # Wait 5 minutes
-            data = etsy.get_shop(c['shop_name'])
+            data = etsy.get_shop(c['shop_id'])
             code = etsy.get_request_code()
         
         if code == 200:

@@ -26,8 +26,8 @@ if not os.path.isfile(DATABASE):
 # ### Specific for users
 
 def make_insert_user_query(d):
-    data_tuple = (d['user_id'], get_date_time_now(), d['transaction_buy_count'], d['transaction_sold_count'])
-    query = f"""INSERT INTO {TABLE_NAME} (user_id, check_date, transaction_buy_count, transaction_sold_count) 
+    data_tuple = (d['user_id'], get_date_time_now(), d['transaction_buy_count'], d['transaction_sold_count'], d['shop_id'])
+    query = f"""INSERT INTO {TABLE_NAME} (user_id, check_date, transaction_buy_count, transaction_sold_count, shop_id) 
     VALUES (?, ?, ?, ?)"""
     cursor.execute(query, data_tuple)
     return cursor.rowcount

@@ -54,7 +54,7 @@ try:
         page = 1
         count_page = 0
         code = 0
-        shop = c['shop_name']
+        shop = c['shop_id']
         print(shop)
 
         while page:
